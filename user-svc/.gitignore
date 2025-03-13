@@ -1,0 +1,8 @@
+# Ignore SQLite db files
+*.db
+
+/.idea/
+/tmp/
+
+.env
+*.air.*
