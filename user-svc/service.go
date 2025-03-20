@@ -9,13 +9,13 @@ var (
 	ErrRequiredField   = errors.New("required field missing")
 )
 
-// UserService handles business logic for user operations
+// Modified UserService to use the interface instead of concrete type
 type UserService struct {
-	repo *UserRepository
+	repo UserRepositoryInterface
 }
 
 // NewUserService creates a new UserService
-func NewUserService(repo *UserRepository) *UserService {
+func NewUserService(repo UserRepositoryInterface) *UserService {
 	return &UserService{
 		repo: repo,
 	}

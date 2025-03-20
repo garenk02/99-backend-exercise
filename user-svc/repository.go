@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+// UserRepositoryInterface defines the methods that a user repository must implement
+type UserRepositoryInterface interface {
+	GetAllUsers(pageNum, pageSize int) ([]User, error)
+	GetUserByID(id int) (User, error)
+	CreateUser(name string) (User, error)
+}
+
 // UserRepository handles data access operations for users
 type UserRepository struct {
 	db     *sql.DB
@@ -39,16 +46,16 @@ func (r *UserRepository) GetAllUsers(pageNum, pageSize int) ([]User, error) {
 	// Use appropriate SQL syntax based on database type
 	if r.dbType == "sqlite" {
 		rows, err = r.db.QueryContext(ctx, `
-			SELECT id, name, created_at, updated_at 
-			FROM users 
-			ORDER BY created_at DESC 
+			SELECT id, name, created_at, updated_at
+			FROM users
+			ORDER BY created_at DESC
 			LIMIT ? OFFSET ?
 		`, pageSize, offset)
 	} else {
 		rows, err = r.db.QueryContext(ctx, `
-			SELECT id, name, created_at, updated_at 
-			FROM users 
-			ORDER BY created_at DESC 
+			SELECT id, name, created_at, updated_at
+			FROM users
+			ORDER BY created_at DESC
 			LIMIT $1 OFFSET $2
 		`, pageSize, offset)
 	}
@@ -92,15 +99,15 @@ func (r *UserRepository) GetUserByID(id int) (User, error) {
 	// Use appropriate SQL syntax based on database type
 	if r.dbType == "sqlite" {
 		err = r.db.QueryRowContext(ctx, `
-			SELECT id, name, created_at, updated_at 
-			FROM users 
+			SELECT id, name, created_at, updated_at
+			FROM users
 			WHERE id = ?
 		`, id).Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt)
 	} else {
 		// Default to PostgreSQL syntax
 		err = r.db.QueryRowContext(ctx, `
-			SELECT id, name, created_at, updated_at 
-			FROM users 
+			SELECT id, name, created_at, updated_at
+			FROM users
 			WHERE id = $1
 		`, id).Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt)
 	}
@@ -134,7 +141,7 @@ func (r *UserRepository) CreateUser(name string) (User, error) {
 	if r.dbType == "sqlite" {
 		// SQLite doesn't support RETURNING, so we need to use two queries
 		result, err := r.db.ExecContext(ctx, `
-			INSERT INTO users (name, created_at, updated_at) 
+			INSERT INTO users (name, created_at, updated_at)
 			VALUES (?, ?, ?)
 		`, name, now, now)
 
@@ -152,8 +159,8 @@ func (r *UserRepository) CreateUser(name string) (User, error) {
 
 		// Fetch the created user
 		err = r.db.QueryRowContext(ctx, `
-			SELECT id, name, created_at, updated_at 
-			FROM users 
+			SELECT id, name, created_at, updated_at
+			FROM users
 			WHERE id = ?
 		`, lastID).Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt)
 
@@ -165,8 +172,8 @@ func (r *UserRepository) CreateUser(name string) (User, error) {
 	} else {
 		// PostgreSQL supports RETURNING
 		err = r.db.QueryRowContext(ctx, `
-			INSERT INTO users (name, created_at, updated_at) 
-			VALUES ($1, $2, $3) 
+			INSERT INTO users (name, created_at, updated_at)
+			VALUES ($1, $2, $3)
 			RETURNING id, name, created_at, updated_at
 		`, name, now, now).Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt)
 	}
